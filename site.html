@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>F&B Burguer | Cardápio Digital</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <header>
+
+        <img src="./Logo F&B.jpeg" class="main-logo">
+
+        <div id="openStatus"></div>
+
+    </header>
+    <div class="hero">
+        <div class="hero-content">
+            <h1>F&B Burguer</h1>
+            <p>Hambúrguer artesanal • Espetinhos • Açaí</p>
+            <span class="hero-badge">🔥 Mais pedidos hoje</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <input type="text" id="searchBar" placeholder="Pesquisar no cardápio..." onkeyup="window.buscarMenu(this.value)"
+            style="width: 100%; padding: 15px; background: #1f2833; border: 1px solid #45A29E; border-radius: 15px; color: white; margin-bottom: 20px;">
+
+        <div class="categories-nav" id="catNav">
+            <button class="cat-btn active" onclick="window.filterCat('Burguer', this)">Hambúrgueres</button>
+            <button class="cat-btn" onclick="window.filterCat('Espetinho', this)">Espetinhos</button>
+            <button class="cat-btn" onclick="window.filterCat('Açaí', this)">Açaí</button>
+            <button class="cat-btn" onclick="window.filterCat('Batata', this)">Batatas</button>
+            <button class="cat-btn" onclick="window.filterCat('Bebidas', this)">Bebidas</button>
+        </div>
+
+        <div class="grid" id="menuGrid"></div>
+    </div>
+
+    <div class="cart-bar" id="cartBar" onclick="window.openCheckout()" style="display: none;">
+        <div style="display:flex; align-items:center; gap:12px">
+            <span id="cartQty"
+                style="background:#fff; color:#000; padding:3px 10px; border-radius:8px; font-weight:800;">0</span>
+            <div>
+                <strong>Ver Carrinho</strong>
+                <div style="font-size:.8rem; opacity:.8">Toque para finalizar</div>
+            </div>
+        </div>
+        <span id="cartTotal" style="font-weight: 800;">R$ 0,00</span>
+    </div>
+
+    <div class="modal" id="modalCheckout" style="display: none;">
+        <div class="modal-body">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="font-weight: 800;">Finalizar Pedido</h2>
+                <i class="fa fa-times" onclick="window.closeModal()" style="cursor:pointer; font-size:1.5rem;"></i>
+            </div>
+
+            <div id="itemsReview"
+                style="max-height: 200px; overflow-y: auto; margin-bottom: 20px; border-bottom: 1px solid #45a29e; padding-bottom: 10px;">
+            </div>
+
+            <input type="text" id="cliNome" placeholder="Seu Nome (Obrigatório)">
+            <input type="tel" id="cliFone" placeholder="WhatsApp (DDD + Número)">
+
+            <select id="tipoEntrega" onchange="window.toggleEntrega(this.value)">
+                <option value="retirada">Vou Retirar (Balcão)</option>
+                <option value="entrega">Entrega (Delivery)</option>
+            </select>
+
+            <div id="campoEndereco" class="hidden">
+                <input type="text" id="cliEnd" placeholder="Rua, Número, Bairro">
+            </div>
+            <label>Forma de Pagamento:</label>
+            <select id="cliPag" onchange="window.togglePagamento(this.value)">
+                <option value="Pix">Pix</option>
+                <option value="Cartão">Cartão</option>
+                <option value="Dinheiro">Dinheiro</option>
+            </select>
+
+            <div id="campoTroco" class="hidden">
+                <input type="number" id="valorTroco" placeholder="Troco para quanto?">
+            </div>
+
+            <div id="campoCartao" class="hidden">
+                <select id="cliTipoCartao">
+                    <option value="Débito">Débito</option>
+                    <option value="Crédito">Crédito</option>
+                </select>
+            </div>
+            <div
+                style="margin-top:20px; display:flex; justify-content:space-between; font-size:1.4rem; font-weight:800;">
+                <span>TOTAL</span> <span id="finalTotal" style="color:var(--accent)">R$ 0,00</span>
+            </div>
+
+            <button class="finish-btn" id="sendBtn" onclick="window.sendOrder()">🚀 CONFIRMAR PEDIDO</button>
+        </div>
+    </div>
+
+    <div class="modal" id="modalPersonalizar" style="display: none;">
+        <div class="modal-body">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <h2 id="itemPersonalizarNome" style="font-weight: 800; color: var(--accent);">Personalizar</h2>
+                <i class="fa fa-times" onclick="window.fecharPersonalizar()"
+                    style="cursor:pointer; font-size:1.5rem;"></i>
+            </div>
+
+            <div id="opcoesPersonalizar"
+                style="text-align: left; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; color: white;">
+            </div>
+
+            <div id="listaExtras" style="margin-top: 10px; font-size: 0.9rem; color: #45A29E; font-weight: 600;"></div>
+
+            <div
+                style="margin-top:20px; display:flex; justify-content:space-between; font-size:1.2rem; font-weight:800;">
+                <span>Subtotal</span> <span id="itemPersonalizarPreco" style="color:var(--accent)">R$ 0,00</span>
+            </div>
+
+            <button class="finish-btn" onclick="window.confirmarPersonalizacao()" style="margin-top: 15px;">ADICIONAR AO
+                CARRINHO</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDIcG9NqxQ7PLUB9Qu45FUWwvD1K7of-2s",
+            authDomain: "fb-pedidos.firebaseapp.com",
+            projectId: "fb-pedidos",
+            storageBucket: "fb-pedidos.appspot.com",
+            messagingSenderId: "702648413709",
+            appId: "1:702648413709:web:80938a1f7375688684703a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const PRODUCTS = [
+            { cat: "Burguer", nome: "Tropical Simples", preco: 22.00, desc: "Pão brioche, blend artesanal 120g, queijo mussarela, cebola caramelizada, bacon, abacaxi grelhado e alface.", img: "./tropical.png" },
+            { cat: "Burguer", nome: "Tropical Duplo", preco: 32.00, desc: "Pão brioche, 2 blends artesanais 120g, queijo mussarela, cebola caramelizada, bacon, abacaxi grelhado e alface.", img: "./tropical.png" },
+            { cat: "Burguer", nome: "Cheesebacon Simples", preco: 21.00, desc: "Pão brioche, blend artesanal 120g, bacon, cheddar, molho da casa e cebola caramelizada.", img: "./CheeseBacon.png" },
+            { cat: "Burguer", nome: "Cheesebacon Duplo", preco: 31.00, desc: "Pão brioche, 2 blends artesanais 120g, bacon, cheddar, molho da casa e cebola caramelizada.", img: "./CheeseBacon.png" },
+            { cat: "Burguer", nome: "Big F&B Simples", preco: 21.00, desc: "Pão brioche, blend artesanal 120g, cheddar, cebola caramelizada, picles, alface e molho da casa.", img: "./Big.png" },
+            { cat: "Burguer", nome: "Big F&B Duplo", preco: 31.00, desc: "Pão brioche, 2 blends artesanais 120g, cheddar, cebola caramelizada, picles, alface e molho da casa.", img: "./Big.png" },
+            { cat: "Burguer", nome: "F&B Banana Simples", preco: 22.00, desc: "Pão brioche, blend artesanal 120g, molho da casa, queijo mussarela, bacon, alface e banana grelhada.", img: "./Banana.png" },
+            { cat: "Burguer", nome: "F&B Banana Duplo", preco: 32.00, desc: "Pão brioche, 2 blends artesanais 120g, molho da casa, queijo mussarela, bacon, alface e banana grelhada.", img: "./Banana.png" },
+            { cat: "Burguer", nome: "F&B Toscana Simples", preco: 25.00, desc: "Pão brioche, blend de linguiça toscana 120g, queijo mussarela, tomate, molho da casa, alface, anel de cebola e molho agridoce.", img: "./F&B Toscana Simples.png" },
+            { cat: "Burguer", nome: "F&B Toscana Duplo", preco: 35.00, desc: "Pão brioche, 2 blends de linguiça toscana 120g, queijo mussarela, tomate, molho da casa, alface, anel de cebola e molho agridoce.", img: "./F&B Toscana Simples.png" },
+            { cat: "Burguer", nome: "Especial da Casa F&B Mania", preco: 45.00, desc: "Pão brioche, 3 blends artesanais 120g, triplo cheddar, triplo bacon, anéis de cebola, alface e molho da casa.", img: "./Mania.png" },
+            { cat: "Espetinho", nome: "Jantinha Completa", preco: 18.00, desc: "Arroz, feijão tropeiro, vinagrete e mandioca.", img: "./Jantinha.jpg" }, { cat: "Açaí", nome: "Copo 500ml - Super", preco: 20.00, desc: "Açaí cremoso + 4 acompanhamentos grátis." },
+
+            { cat: "Espetinho", nome: "Espetinho de Fraldinha", preco: 10.00, desc: "Espeto de fraldinha bovina.", img: "./fraldinha.png" },
+            { cat: "Espetinho", nome: "Espetinho de Franbacon", preco: 10.00, desc: "Espeto de frango com bacon.", img: "./Espetinho de Franbacon.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Almôndega com Bacon", preco: 10.00, desc: "Espeto de almôndega envolta em bacon.", img: "./Espetinho de Almôndega com Bacon.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Costela Bovina", preco: 10.00, desc: "Espeto de costela bovina.", img: "./Espetinho de Costela Bovina.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Costela Suína", preco: 10.00, desc: "Espeto de costela suína.", img: "./Espetinho de Costela Suína.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Tulipa", preco: 10.00, desc: "Espeto de tulipa de frango.", img: "./Espetinho de Tulipa.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Medalhão Bovino", preco: 10.00, desc: "Espeto de medalhão bovino envolto em bacon.", img: "./Espetinho de Medalhão Bovino.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Pão de Alho", preco: 10.00, desc: "Espeto de pão de alho assado.", img: "./Espetinho de Pão de Alho.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Linguiça Toscana", preco: 10.00, desc: "Espeto de linguiça toscana.", img: "./Espetinho de Linguiça Toscana.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Linguiça Apimentada", preco: 10.00, desc: "Espeto de linguiça levemente apimentada.", img: "./Espetinho de Linguiça Toscana Apimentada.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Kafta com Queijo", preco: 10.00, desc: "Espeto de kafta com recheio de queijo.", img: "./Espetinho de Kafta com Queijo.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Choripan", preco: 10.00, desc: "Espeto de linguiça estilo choripan.", img: "./Espetinho de Choripan.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Cupim da Laranja", preco: 12.00, desc: "Espeto de cupim marinado com toque de laranja.", img: "./Espetinho de Cupim da Laranja.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Tilápia", preco: 12.00, desc: "Espeto de filé de tilápia.", img: "./Espetinho de Tilápia.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Filé Mignon", preco: 16.00, desc: "Espeto de filé mignon selecionado.", img: "./Espetinho de Filé Mignon.jpg" },
+            { cat: "Espetinho", nome: "Espetinho de Picanha", preco: 18.00, desc: "Espeto de picanha selecionada.", img: "./Espetinho de Picanha.jpg" },
+            { cat: "Batata", nome: "Porção Batata Especial", preco: 45.00, desc: "Cheddar, bacon e 6 anéis de cebola.", img: "./Batata.png" },
+            { cat: "Bebidas", nome: "Coca Cola 2L", preco: 12.00, desc: "Refrigerante 2 Litros" },
+            { cat: "Bebidas", nome: "Coca Cola Zero 2L", preco: 12.00, desc: "Refrigerante Zero 2 Litros" },
+            { cat: "Bebidas", nome: "Fanta Laranja 2L", preco: 12.00, desc: "Refrigerante de Laranja 2 Litros" },
+            { cat: "Bebidas", nome: "Kuat 2L", preco: 10.00, desc: "Refrigerante 2 Litros" },
+            { cat: "Bebidas", nome: "Mineiro 1.5L", preco: 7.50, desc: "Refrigerante 1,5 Litros" },
+            { cat: "Bebidas", nome: "Coca Cola 1L", preco: 8.50, desc: "Refrigerante 1 Litro" },
+            { cat: "Bebidas", nome: "Coca Cola Zero 1L", preco: 8.50, desc: "Refrigerante Zero 1 Litro" },
+            { cat: "Bebidas", nome: "Mineiro Lata", preco: 5.00, desc: "Refrigerante Lata" },
+            { cat: "Bebidas", nome: "Fanta Laranja Lata", preco: 5.00, desc: "Refrigerante de Laranja Lata" },
+            { cat: "Bebidas", nome: "Fanta Uva Lata", preco: 5.00, desc: "Refrigerante de Uva Lata" },
+            { cat: "Bebidas", nome: "Coca Cola Lata", preco: 5.00, desc: "Refrigerante Lata" },
+            { cat: "Bebidas", nome: "Coca Cola Zero Lata", preco: 5.00, desc: "Refrigerante Zero Lata" },
+            { cat: "Bebidas", nome: "Dell Vale Lata", preco: 5.00, desc: "Suco em Lata" },
+            { cat: "Bebidas", nome: "Água Mineral", preco: 4.00, desc: "Água Mineral 500ml" },
+            { cat: "Bebidas", nome: "Água com Gás", preco: 4.00, desc: "Água Gasosa 500ml" },
+            { cat: "Bebidas", nome: "Dell Vale Pêssego", preco: 10.00, desc: "Suco de Pêssego 1L" },
+            { cat: "Bebidas", nome: "Dell Vale Manga", preco: 10.00, desc: "Suco de Manga 1L" },
+            { cat: "Bebidas", nome: "Dell Vale Abacaxi", preco: 10.00, desc: "Suco de Abacaxi 1L" },
+            { cat: "Bebidas", nome: "Dell Vale Laranja", preco: 10.00, desc: "Suco de Laranja 1L" },
+            { cat: "Bebidas", nome: "Amstel", preco: 6.00, desc: "Cerveja Lata" },
+            { cat: "Bebidas", nome: "Skol", preco: 5.00, desc: "Cerveja Lata" },
+            { cat: "Bebidas", nome: "Brahma", preco: 5.00, desc: "Cerveja Lata" },
+            { cat: "Bebidas", nome: "Heineken", preco: 9.00, desc: "Cerveja Lata" },
+            { cat: "Batata", nome: "Batata Tamanho M", preco: 45.00, desc: "Cheddar, bacon e 6 anéis de cebola.", img: "./Batata.png" },
+
+            { cat: "Batata", nome: "Batata Tamanho P", preco: 45.00, desc: "Cheddar, bacon e 6 anéis de cebola.", img: "./Batata.png" },
+
+            { cat: "Bebidas", nome: "Monster Energy", preco: 13.00, desc: "Energético Lata" }];
+        const ADICIONAIS = [
+
+            { nome: "Pão + 1Blend", preco: 13.00 },
+            { nome: "Pão + 2Blend", preco: 17.00 },
+
+            { nome: "Molho Verde", preco: 3.00 },
+            { nome: "Molho da Casa", preco: 3.00 },
+            { nome: "Molho de Alho", preco: 3.00 },
+
+            { nome: "Mussarela", preco: 3.00 },
+            { nome: "Cheddar", preco: 3.00 },
+
+            { nome: "Bacon", preco: 4.00 },
+            { nome: "Ovo", preco: 3.00 },
+
+            { nome: "Abacaxi", preco: 2.00 },
+            { nome: "Banana", preco: 2.00 },
+
+            { nome: "Alface", preco: 1.00 },
+            { nome: "Cebola Caramelizada", preco: 2.00 },
+            { nome: "Picles", preco: 3.00 },
+
+            { nome: "Anel de Cebola", preco: 4.00 }
+
+        ]
+
+        let cart = [];
+        let currentCat = "Burguer";
+        let itemSendoPersonalizado = null;
+        let extrasAtivos = [];
+
+        // FILTRO DE CATEGORIA
+        window.filterCat = (cat, btn) => {
+            currentCat = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            window.renderMenu();
+        };
+
+        // RENDERIZAR MENU
+        window.renderMenu = (filter = "") => {
+            const searchTerm = (typeof filter === 'string' ? filter : "").toLowerCase();
+            const grid = document.getElementById('menuGrid');
+            const filtered = PRODUCTS.filter(p => {
+                const matchesCat = (currentCat === 'all' || p.cat === currentCat);
+                const matchesSearch = p.nome.toLowerCase().includes(searchTerm);
+                return matchesCat && matchesSearch;
+            });
+
+            grid.innerHTML = filtered.map(p => `
+<div class="item ${p.preco >= 35 ? 'item-destaque' : ''}">
+
+    <div class="product-image-container">
+        <img src="${p.img || './img/placeholder.png'}" class="product-image" onerror="this.src='./img/placeholder.png'">
+    </div>
+
+    <div class="item-info">
+
+        <h3>${p.nome}</h3>
+        <p>${p.desc}</p>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
+            <span class="price">R$ ${p.preco.toFixed(2)}</span>
+
+            <button onclick="window.addToCart('${p.nome}', ${p.preco}, '${p.cat}')" class="add-btn-style">
+                <i class="fa fa-plus"></i> ADICIONAR
+            </button>
+        </div>
+
+    </div>
+
+</div>
+`).join('');
+        };
+
+        // ADICIONAR AO CARRINHO (COM LÓGICA DE PERSONALIZAÇÃO)
+        window.addToCart = (nome, preco, cat) => {
+            const produto = PRODUCTS.find(p => p.nome === nome);
+
+            if (cat !== 'Burguer' || !produto) {
+                cart.push({ nome, preco, cat, obs: "" });
+                window.atualizarInterfaceCarrinho();
+                return;
+            }
+
+            itemSendoPersonalizado = { nome, preco, cat };
+            extrasAtivos = [];
+
+            document.getElementById('itemPersonalizarNome').innerText = nome;
+            document.getElementById('itemPersonalizarPreco').innerText = `R$ ${preco.toFixed(2)}`;
+            document.getElementById('listaExtras').innerHTML = "";
+
+            const ignorar = ["pão", "brioche", "blend", "120g", "artesanal", "queijo", "mussarela", "cheddar"];
+
+            // --- LÓGICA DE SEPARAÇÃO MELHORADA ---
+            // 1. Troca o " e " por uma vírgula para separar itens grudados
+            // 2. Divide por vírgula
+            // 3. Limpa espaços e pontos
+            const ingredientesRaw = produto.desc.replace(/ e /g, ', ').split(',');
+            const ingredientes = ingredientesRaw.map(i => i.trim().replace('.', ''));
+
+            const container = document.getElementById('opcoesPersonalizar');
+            let htmlDinamico = `<p style="margin-bottom:12px; font-weight:bold; color:var(--accent);">Retirar ingredientes?</p>`;
+
+            // Usamos um Set para evitar ingredientes duplicados (caso a descrição tenha erro)
+            const itensRenderizados = new Set();
+
+            ingredientes.forEach(ing => {
+                const podeRetirar = !ignorar.some(termo => ing.toLowerCase().includes(termo));
+
+                // Evita botões vazios, duplicados ou itens da lista de ignorar
+                if (podeRetirar && ing !== "" && !itensRenderizados.has(ing.toLowerCase())) {
+                    htmlDinamico += `
+                <label style="display:flex; align-items:center; gap:12px; margin-bottom:10px; background:rgba(255,255,255,0.05); padding:10px; border-radius:10px; cursor:pointer;">
+                    <input type="checkbox" class="obs-check" value="Sem ${ing}" style="width:18px; height:18px; accent-color:var(--brand-red);"> 
+                    <span style="font-size:0.95rem; text-transform: capitalize;">Sem ${ing}</span>
+                </label>`;
+                    itensRenderizados.add(ing.toLowerCase());
+                }
+            });
+
+            htmlDinamico += `
+<hr style="border:0; border-top:1px solid #333; margin:15px 0;">
+<p style="margin-bottom:12px; font-weight:bold; color:var(--accent);">
+Adicionais
+</p>
+`
+
+            ADICIONAIS.forEach(extra => {
+
+                htmlDinamico += `
+
+<div style="
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:rgba(255,255,255,0.05);
+padding:10px;
+border-radius:10px;
+margin-bottom:8px;
+">
+
+<span>${extra.nome}</span>
+
+<button onclick="window.addExtra('${extra.nome}', ${extra.preco})"
+style="
+background:var(--brand-red);
+border:none;
+padding:6px 12px;
+border-radius:8px;
+color:white;
+font-weight:800;
+cursor:pointer;
+">
+
++ R$ ${extra.preco.toFixed(2)}
+
+</button>
+
+</div>
+
+`
+
+            })
+
+            container.innerHTML = htmlDinamico;
+            document.getElementById('modalPersonalizar').style.display = 'flex';
+        };
+
+        window.addExtra = (nomeExtra, precoExtra) => {
+            extrasAtivos.push({ nome: nomeExtra, preco: precoExtra });
+            const total = itemSendoPersonalizado.preco + extrasAtivos.reduce((a, b) => a + b.preco, 0);
+            document.getElementById('itemPersonalizarPreco').innerText = `R$ ${total.toFixed(2)}`;
+            document.getElementById('listaExtras').innerHTML = "<b>Extras:</b> " + extrasAtivos.map(e => e.nome).join(', ');
+        };
+
+        window.confirmarPersonalizacao = () => {
+            const checks = document.querySelectorAll('.obs-check:checked');
+            let observacoes = Array.from(checks).map(c => c.value);
+
+            const itemFinal = {
+                nome: itemSendoPersonalizado.nome,
+                preco: itemSendoPersonalizado.preco + extrasAtivos.reduce((a, b) => a + b.preco, 0),
+                cat: itemSendoPersonalizado.cat,
+                obs: observacoes.concat(extrasAtivos.map(e => "Extra " + e.nome)).join(', ')
+            };
+
+            cart.push(itemFinal);
+            window.atualizarInterfaceCarrinho();
+            window.fecharPersonalizar();
+        };
+
+        // INTERFACE DO CARRINHO
+        window.atualizarInterfaceCarrinho = () => {
+            const total = cart.reduce((a, b) => a + b.preco, 0);
+            document.getElementById('cartQty').innerText = cart.length + " itens"; document.getElementById('cartTotal').innerText = `R$ ${total.toFixed(2)}`;
+            document.getElementById('cartBar').style.display = 'flex';
+            confetti({ particleCount: 40, spread: 70, origin: { y: 0.9 }, colors: ['#FFB703', '#E63946'] });
+        };
+
+        window.openCheckout = () => {
+            const modal = document.getElementById('modalCheckout');
+            const review = document.getElementById('itemsReview');
+            if (cart.length === 0) {
+                review.innerHTML = '<p style="text-align:center; color:gray; padding:20px;">Carrinho vazio.</p>';
+                document.getElementById('finalTotal').innerText = `R$ 0,00`;
+            } else {
+                review.innerHTML = cart.map((item, index) => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;">
+                        <div>
+                            <span style="font-weight:600; display:block;">1x ${item.nome}</span>
+                            <small style="color:#45A29E;">${item.obs || ''}</small>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <strong>R$ ${item.preco.toFixed(2)}</strong>
+                            <i class="fa fa-trash-alt" onclick="window.removeItem(${index})" style="color:#ff4d4d; cursor:pointer;"></i>
+                        </div>
+                    </div>
+                `).join('');
+                const total = cart.reduce((a, b) => a + b.preco, 0);
+                document.getElementById('finalTotal').innerText = `R$ ${total.toFixed(2)}`;
+            }
+            modal.style.display = 'flex';
+        };
+
+        window.removeItem = (index) => {
+            cart.splice(index, 1);
+            if (cart.length === 0) {
+                document.getElementById('cartBar').style.display = 'none';
+                window.closeModal();
+            } else {
+                window.openCheckout();
+                window.atualizarInterfaceCarrinho();
+            }
+        };
+
+        window.fecharPersonalizar = () => document.getElementById('modalPersonalizar').style.display = 'none';
+        window.closeModal = () => document.getElementById('modalCheckout').style.display = 'none';
+        window.toggleEntrega = (val) => document.getElementById('campoEndereco').classList.toggle('hidden', val !== 'entrega');
+        window.toggleCamposPagamento = (val) => {
+            // Mostra troco apenas se for Dinheiro
+            document.getElementById('campoTroco').classList.toggle('hidden', val !== 'Dinheiro');
+            // Mostra tipo de cartão apenas se for Cartão
+            document.getElementById('campoCartao').classList.toggle('hidden', val !== 'Cartão');
+        };
+        window.togglePagamento = (val) => {
+            const campoTroco = document.getElementById('campoTroco');
+            const campoCartao = document.getElementById('campoCartao');
+
+            if (campoTroco && campoCartao) {
+                // Mostra o campo de troco apenas se o valor selecionado for 'Dinheiro'
+                campoTroco.classList.toggle('hidden', val !== 'Dinheiro');
+
+                // Mostra o campo de cartão apenas se o valor selecionado for 'Cartão'
+                campoCartao.classList.toggle('hidden', val !== 'Cartão');
+            }
+        };
+        // ENVIO PARA FIREBASE
+        // ENVIO PARA FIREBASE (AJUSTADO PARA A ESTRUTURA DA COZINHA)
+        // Importante: Certifique-se que o import está no topo do seu script ou arquivo
+        import { FICHA_TECNICA } from './config.js';
+
+        window.sendOrder = async () => {
+            const nome = document.getElementById('cliNome').value;
+            const fone = document.getElementById('cliFone').value.replace(/\D/g, '');
+            const tipoEntrega = document.getElementById('tipoEntrega').value;
+            const end = document.getElementById('cliEnd').value;
+            const pag = document.getElementById('cliPag').value;
+            const troco = document.getElementById('valorTroco').value;
+            const tipoCartao = document.getElementById('cliTipoCartao').value;
+
+            if (!nome || !fone) return alert("Nome e WhatsApp são obrigatórios!");
+            if (tipoEntrega === 'entrega' && !end) return alert("Informe o endereço!");
+
+            try {
+                const btn = document.getElementById('sendBtn');
+                btn.innerText = "ENVIANDO...";
+                btn.disabled = true;
+
+                let tipoNormalizado = null;
+                if (pag === 'Cartão') {
+                    tipoNormalizado = tipoCartao.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+                }
+
+                const lanchesParaCozinha = {};
+                const espetosParaCozinha = {};
+                let observacoesGerais = [];
+
+                // --- PREPARAÇÃO PARA BAIXA DE ESTOQUE ---
+                const itensParaBaixar = {};
+
+                cart.forEach(item => {
+                    if (item.obs) observacoesGerais.push(`${item.nome}: (${item.obs})`);
+
+                    // Separação para cozinha
+                    if (item.cat === "Burguer" || item.cat === "Batata") {
+                        lanchesParaCozinha[item.nome] = (lanchesParaCozinha[item.nome] || 0) + 1;
+                    } else if (item.cat === "Espetinho") {
+                        espetosParaCozinha[item.nome] = (espetosParaCozinha[item.nome] || 0) + 1;
+                    }
+
+                    // Lógica da Ficha Técnica (Estoque)
+                    const receita = FICHA_TECNICA[item.nome];
+                    if (receita) {
+                        for (const [insumo, qtd] of Object.entries(receita)) {
+                            // Multiplica a quantidade da receita pela quantidade do item no carrinho
+                            itensParaBaixar[insumo] = (itensParaBaixar[insumo] || 0) + (qtd * 1);
+                        }
+                    } else {
+                        // Se não houver ficha técnica (ex: um espeto específico), baixa pelo nome direto
+                        itensParaBaixar[item.nome] = (itensParaBaixar[item.nome] || 0) + 1;
+                    }
+                });
+
+                const totalPedido = cart.reduce((a, b) => a + b.preco, 0);
+
+                const dadosPedido = {
+                    cliente_nome: nome,
+                    cliente_fone: fone,
+                    total: totalPedido,
+                    tipo_local: tipoEntrega,
+                    endereco_entrega: tipoEntrega === 'entrega' ? end : "RETIRADA",
+                    pagamento: {
+                        metodo: pag,
+                        tipo_cartao: tipoNormalizado,
+                        valor_recebido: pag === 'Dinheiro' ? (parseFloat(troco) || totalPedido) : totalPedido
+                    },
+                    lanches: lanchesParaCozinha,
+                    espetos: espetosParaCozinha,
+                    observacao: observacoesGerais.join(" | "),
+                    status: "Pendente",
+                    timestamp: Date.now(),
+                    data: new Date().toLocaleDateString('pt-BR')
+                };
+
+                // 1. Salva no Firebase
+                const docRef = await addDoc(collection(db, "pedidos"), dadosPedido);
+
+                // 2. BAIXA AUTOMÁTICA NO ESTOQUE
+                if (window.baixarEstoquePedido) {
+                    await window.baixarEstoquePedido(itensParaBaixar);
+                    console.log("✅ Estoque atualizado com sucesso!");
+                }
+
+                // 3. Monta a mensagem do WhatsApp
+                const numeroWhats = "55034997990974";
+                let msgWhats = `*NOVO PEDIDO (Site)*\n`;
+                msgWhats += `--------------------------\n`;
+                msgWhats += `*Cliente:* ${nome}\n`;
+                msgWhats += `*Pagamento:* ${pag}${pag === 'Cartão' ? ` (${tipoCartao})` : ''}\n`;
+                if (pag === 'Dinheiro' && troco) msgWhats += `*Troco para:* R$ ${troco}\n`;
+                msgWhats += `--------------------------\n`;
+
+                cart.forEach(i => {
+                    msgWhats += `• 1x ${i.nome} ${i.obs ? `(${i.obs})` : ''}\n`;
+                });
+                msgWhats += `*TOTAL:* R$ ${totalPedido.toFixed(2).replace('.', ',')}\n`;
+
+                const linkWhats = `https://wa.me/${numeroWhats}?text=${encodeURIComponent(msgWhats)}`;
+
+                // 4. Finalização
+                window.open(linkWhats, '_blank');
+                cart = [];
+                window.location.href = `status.html?id=${docRef.id}`;
+
+            } catch (e) {
+                alert("Erro ao enviar pedido.");
+                console.error(e);
+                document.getElementById('sendBtn').innerText = "🚀 CONFIRMAR PEDIDO";
+                document.getElementById('sendBtn').disabled = false;
+            }
+        };
+        let searchTimeout;
+
+        window.buscarMenu = (value) => {
+            clearTimeout(searchTimeout);
+
+            searchTimeout = setTimeout(() => {
+                window.renderMenu(value);
+            }, 300);
+        }
+        window.addEventListener("load", function () {
+            if (window.renderMenu) {
+                window.renderMenu();
+            }
+        });
+        function verificarHorarioLoja() {
+
+            const agora = new Date()
+            const dia = agora.getDay()
+            const hora = agora.getHours()
+            const minutos = agora.getMinutes()
+
+            const horarioAtual = hora + minutos / 60
+
+            const horarios = {
+                0: { abre: 19, fecha: 23.5 }, // domingo
+                1: { abre: 19, fecha: 23.5 },
+                2: { abre: 19, fecha: 23.5 },
+                3: { abre: 19, fecha: 23.5 },
+                4: { abre: 15, fecha: 23.5 },
+                5: { abre: 19, fecha: 23.5 },
+                6: { abre: 19, fecha: 23.5 }  // sábado
+            }
+
+            const loja = horarios[dia]
+            const status = document.getElementById("openStatus")
+
+            if (!loja) {
+                status.innerText = "FECHADO"
+                status.style.background = "#dc2626"
+                return
+            }
+
+            if (horarioAtual >= loja.abre && horarioAtual <= loja.fecha) {
+
+                status.innerText = "🟢 ABERTO AGORA"
+                status.style.background = "#16a34a"
+
+                document.querySelectorAll(".add-btn-style").forEach(btn => {
+                    btn.disabled = false
+                    btn.style.opacity = 1
+                })
+
+            } else {
+
+                const abreHora = Math.floor(loja.abre)
+                const abreMin = (loja.abre % 1) * 60
+
+                status.innerText = `🔴 FECHADO • ABRE ${abreHora}:${abreMin === 0 ? "00" : abreMin}`
+                status.style.background = "#dc2626"
+
+                document.querySelectorAll(".add-btn-style").forEach(btn => {
+                    btn.disabled = true
+                    btn.style.opacity = .5
+                })
+
+            }
+
+        }
+
+        verificarHorarioLoja()
+        setInterval(verificarHorarioLoja, 60000)
+        async function pagarPix(total) {
+
+            try {
+
+                const res = await fetch("http://localhost:3000/pix", {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        valor: total,
+                        descricao: "Pedido F&B Burguer"
+                    })
+
+                })
+
+                const data = await res.json()
+
+                document.getElementById("pixArea").classList.remove("hidden")
+
+                document.getElementById("pixQr").src =
+                    "data:image/png;base64," + data.qr_base64
+
+                document.getElementById("pixCode").value =
+                    data.qr_code
+
+            } catch (e) {
+
+                alert("Erro ao gerar PIX")
+
+                console.error(e)
+
+            }
+
+        }
+        function mostrarPix(data) {
+
+            document.getElementById("pixArea").classList.remove("hidden")
+
+            document.getElementById("pixQr").src =
+                "data:image/png;base64," + data.qr_base64
+
+            document.getElementById("pixCode").value =
+                data.qr_code
+
+        }
+        window.copiarPix = () => {
+
+            const campo = document.getElementById("pixCode")
+
+            campo.select()
+
+            document.execCommand("copy")
+
+            alert("Código PIX copiado!")
+
+        }
+
+    </script>
+
+    <div id="pixArea" class="modal hidden">
+
+        <div class="modal-body" style="text-align:center">
+
+            <h2>Pagamento via PIX</h2>
+
+            <img id="pixQr" width="250">
+
+            <p>Copiar código PIX</p>
+
+            <textarea id="pixCode"
+                style="width:100%;height:80px;background:#0b0c10;color:white;border:1px solid #45A29E;border-radius:10px;padding:10px">
+</textarea>
+
+            <button class="finish-btn" onclick="copiarPix()">
+                Copiar código PIX
+            </button>
+
+        </div>
+
+    </div>
+</body>
+
+</html>

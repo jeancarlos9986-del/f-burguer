@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque - F&B Burguer</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #121212;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .card {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #28a745;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #333;
+            text-align: left;
+        }
+
+        .btn-acao {
+            cursor: pointer;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .btn-add {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-reset {
+            background: #dc3545;
+            color: white;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        input {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #333;
+            background: #0b0c10;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="gerenciamento.html" style="color: #ff9800; text-decoration: none;">⬅️ Voltar ao Gerenciamento</a>
+
+        <div class="card" style="margin-top: 20px;">
+            <h2>📦 Controle de Estoque</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qtd</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-estoque">
+                </tbody>
+            </table>
+
+            <button class="btn-acao btn-reset" onclick="window.inicializarEstoquePadrao()">🔄 Resetar/Carregar Estoque
+                Padrão</button>
+        </div>
+
+        <div class="card" style="border-left: 5px solid #ff9800;">
+            <h3>➕ Novo Item</h3>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="novo-item-nome" placeholder="Nome do insumo" style="flex: 1;">
+                <input type="number" id="novo-item-qtd" placeholder="Qtd" style="width: 80px;">
+                <button onclick="window.cadastrarNovoItem()" class="btn-acao btn-add">ADICIONAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./estoque.js"></script>
+</body>
+
+</html>
