@@ -12,7 +12,9 @@ app.use(express.json());
    FIREBASE
 ========================= */
 
-admin.initializeApp();
+admin.initializeApp({
+    credential: admin.credential.applicationDefault()
+});
 
 const db = admin.firestore();
 
@@ -192,13 +194,13 @@ app.post("/webhook", async (req, res) => {
    START SERVIDOR
 ========================= */
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
 
     console.log("====================================");
     console.log("🔥 SERVIDOR RODANDO");
-    console.log("URL: http://localhost:" + PORT);
+    console.log("PORTA:", PORT);
     console.log("Webhook:", WEBHOOK_URL);
     console.log("====================================");
 
