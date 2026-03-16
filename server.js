@@ -33,7 +33,7 @@ const payment = new Payment(client);
    URL WEBHOOK (NGROK)
 ========================= */
 
-const WEBHOOK_URL = "https://superordinary-superstrictly-briana.ngrok-free.dev/webhook";
+const WEBHOOK_URL = "https://f-burguer.onrender.com";
 
 /* =========================
    ROTA TESTE
