@@ -1,17 +1,12 @@
 {
   "name": "pdv-teste",
   "version": "1.0.0",
-  "description": "Servidor PIX Mercado Pago para sistema de pedidos",
+  "description": "Servidor PIX Mercado Pago",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "keywords": [
-    "pdv",
-    "pix",
-    "mercadopago",
-    "firebase"
-  ],
+  "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
