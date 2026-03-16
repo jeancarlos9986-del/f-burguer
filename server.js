@@ -12,9 +12,7 @@ app.use(express.json());
    FIREBASE
 ========================= */
 
-admin.initializeApp({
-    credential: admin.credential.applicationDefault()
-});
+admin.initializeApp();
 
 const db = admin.firestore();
 
@@ -32,10 +30,10 @@ const client = new MercadoPagoConfig({
 const payment = new Payment(client);
 
 /* =========================
-   URL WEBHOOK (NGROK)
+   URL WEBHOOK (RAILWAY)
 ========================= */
 
-const WEBHOOK_URL = "https://superordinary-superstrictly-briana.ngrok-free.dev/webhook";
+const WEBHOOK_URL = "https://f-burguer-production.up.railway.app/webhook";
 
 /* =========================
    ROTA TESTE
@@ -50,6 +48,7 @@ app.get("/", (req, res) => {
 ========================= */
 
 app.post("/pix", async (req, res) => {
+
     const { valor, descricao, pedidoId } = req.body;
 
     if (!valor || !descricao) {
@@ -57,6 +56,7 @@ app.post("/pix", async (req, res) => {
     }
 
     try {
+
         const paymentData = {
             body: {
                 transaction_amount: Number(valor),
@@ -64,11 +64,12 @@ app.post("/pix", async (req, res) => {
                 payment_method_id: "pix",
                 payer: { email: "cliente@email.com" },
                 metadata: { pedido_id: pedidoId || "sem_pedido" },
-                notification_url: WEBHOOK_URL.trim() // Limpa espaços
+                notification_url: WEBHOOK_URL
             }
         };
 
         const result = await payment.create(paymentData);
+
         const qr = result.point_of_interaction?.transaction_data;
 
         if (!qr) {
@@ -79,16 +80,20 @@ app.post("/pix", async (req, res) => {
             pagamento_id: result.id,
             status: result.status,
             qr_code: qr.qr_code,
-            qr_base64: qr.qr_code_base64 // Certifique-se que o site.html usa esse nome
+            qr_base64: qr.qr_code_base64
         });
 
     } catch (error) {
-        console.error("❌ ERRO COMPLETO:", error); // Isso vai mostrar o erro real no terminal
+
+        console.error("❌ ERRO COMPLETO:", error);
+
         res.status(500).json({
             erro: "Erro ao gerar PIX",
-            detalhe: error.message || "Erro desconhecido"
+            detalhe: error.message
         });
+
     }
+
 });
 
 /* =========================
@@ -106,10 +111,8 @@ app.get("/status/:id", async (req, res) => {
         });
 
         res.json({
-
             id: result.id,
             status: result.status
-
         });
 
     } catch (error) {
@@ -154,23 +157,15 @@ app.post("/webhook", async (req, res) => {
 
                 const pedidoId = result.metadata?.pedido_id;
 
-                console.log("Pedido relacionado:", pedidoId);
-
                 if (pedidoId && pedidoId !== "sem_pedido") {
 
                     await db.collection("pedidos").doc(pedidoId).update({
-
                         status: "Pendente",
                         pago: true,
                         pagoEm: new Date()
-
                     });
 
                     console.log("📦 Pedido enviado para cozinha:", pedidoId);
-
-                } else {
-
-                    console.log("⚠️ PedidoId não encontrado");
 
                 }
 
