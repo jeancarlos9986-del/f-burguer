@@ -5,7 +5,16 @@ const admin = require("firebase-admin");
 
 const app = express();
 
-app.use(cors());
+/* =========================
+   CORS
+========================= */
+
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"]
+}));
+
 app.use(express.json());
 
 /* =========================
@@ -13,14 +22,13 @@ app.use(express.json());
 ========================= */
 
 admin.initializeApp();
-
 const db = admin.firestore();
 
 /* =========================
    CONFIG MERCADO PAGO
 ========================= */
 
-const ACCESS_TOKEN = "APP_USR-7535882781565948-031313-da5d5532438cd103f8228a4cee75f344-293452112";
+const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
 
 const client = new MercadoPagoConfig({
     accessToken: ACCESS_TOKEN,
@@ -30,10 +38,10 @@ const client = new MercadoPagoConfig({
 const payment = new Payment(client);
 
 /* =========================
-   URL WEBHOOK (RAILWAY)
+   URL WEBHOOK
 ========================= */
 
-const WEBHOOK_URL = "https://f-burguer-production.up.railway.app/webhook";
+const WEBHOOK_URL = "https://f-burguer.onrender.com/webhook";
 
 /* =========================
    ROTA TESTE
@@ -52,7 +60,9 @@ app.post("/pix", async (req, res) => {
     const { valor, descricao, pedidoId } = req.body;
 
     if (!valor || !descricao) {
-        return res.status(400).json({ erro: "Valor e descrição são obrigatórios" });
+        return res.status(400).json({
+            erro: "Valor e descrição são obrigatórios"
+        });
     }
 
     try {
@@ -73,7 +83,9 @@ app.post("/pix", async (req, res) => {
         const qr = result.point_of_interaction?.transaction_data;
 
         if (!qr) {
-            return res.status(500).json({ erro: "Mercado Pago não retornou dados do QR Code" });
+            return res.status(500).json({
+                erro: "Mercado Pago não retornou dados do QR Code"
+            });
         }
 
         res.json({
@@ -128,7 +140,7 @@ app.get("/status/:id", async (req, res) => {
 });
 
 /* =========================
-   WEBHOOK MERCADO PAGO
+   WEBHOOK
 ========================= */
 
 app.post("/webhook", async (req, res) => {
@@ -143,17 +155,13 @@ app.post("/webhook", async (req, res) => {
 
             console.log("📩 Webhook recebido:", paymentId);
 
-            const result = await payment.get({
-                id: paymentId
-            });
+            const result = await payment.get({ id: paymentId });
 
             const status = result.status;
 
             console.log("Status pagamento:", status);
 
             if (status === "approved") {
-
-                console.log("✅ PAGAMENTO APROVADO:", paymentId);
 
                 const pedidoId = result.metadata?.pedido_id;
 
@@ -178,7 +186,6 @@ app.post("/webhook", async (req, res) => {
     } catch (error) {
 
         console.error("❌ ERRO WEBHOOK:", error);
-
         res.sendStatus(500);
 
     }
